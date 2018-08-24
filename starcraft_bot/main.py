@@ -9,6 +9,7 @@ import numpy as np
 
 HEADLESS = True
 
+
 print(sc2.__file__)
 class MattBot(sc2.BotAI):
     def __init__(self):
