@@ -131,7 +131,7 @@ class MattBot(sc2.BotAI):
             population_ratio = 1.0
 
         plausible_supply = supply_cap_fixed / 200.0
-        military_weight = len(self.units(VOIDRAY)) / (supply_cap_fixed - max(self.supply_left, 1))
+        military_weight = len(self.units(VOIDRAY)) / max((supply_cap_fixed - self.supply_left), 1)
         if military_weight > 1.0:
             military_weight = 1.0
 
@@ -199,23 +199,24 @@ class MattBot(sc2.BotAI):
         if self.units(PYLON).ready.exists:
             pylon = self.units(PYLON).ready.random
 
-            if self.units(GATEWAY).ready.exists and not self.units(CYBERNETICSCORE):
-                if self.can_afford(CYBERNETICSCORE) and not self.already_pending(CYBERNETICSCORE):
-                    await self.build(CYBERNETICSCORE, near=pylon)
+            if self.units(PROBE).amount > 0:
+                if self.units(GATEWAY).ready.exists and not self.units(CYBERNETICSCORE):
+                    if self.can_afford(CYBERNETICSCORE) and not self.already_pending(CYBERNETICSCORE):
+                        await self.build(CYBERNETICSCORE, near=pylon)
 
-            elif len(self.units(GATEWAY)) < 1:
-                if self.can_afford(GATEWAY) and not self.already_pending(GATEWAY):
-                    await self.build(GATEWAY, near=pylon)
+                elif len(self.units(GATEWAY)) < 1:
+                    if self.can_afford(GATEWAY) and not self.already_pending(GATEWAY):
+                        await self.build(GATEWAY, near=pylon)
 
-            if self.units(CYBERNETICSCORE).ready.exists:
-                if len(self.units(ROBOTICSFACILITY)) < 1:
-                    if self.can_afford(ROBOTICSFACILITY) and not self.already_pending(ROBOTICSFACILITY):
-                        await self.build(ROBOTICSFACILITY, near=pylon)
+                if self.units(CYBERNETICSCORE).ready.exists:
+                    if len(self.units(ROBOTICSFACILITY)) < 1:
+                        if self.can_afford(ROBOTICSFACILITY) and not self.already_pending(ROBOTICSFACILITY):
+                            await self.build(ROBOTICSFACILITY, near=pylon)
 
-            if self.units(CYBERNETICSCORE).ready.exists:
-                if len(self.units(STARGATE)) < (self.iteration / self.ITERATIONS_PER_MINUTE):
-                    if self.can_afford(STARGATE) and not self.already_pending(STARGATE):
-                        await self.build(STARGATE, near=pylon)
+                if self.units(CYBERNETICSCORE).ready.exists:
+                    if len(self.units(STARGATE)) < (self.iteration / self.ITERATIONS_PER_MINUTE):
+                        if self.can_afford(STARGATE) and not self.already_pending(STARGATE):
+                            await self.build(STARGATE, near=pylon)
 
     async def expand(self):
         if 1 <= self.units(NEXUS).amount < (self.iteration / self.ITERATIONS_PER_MINUTE / 2):
