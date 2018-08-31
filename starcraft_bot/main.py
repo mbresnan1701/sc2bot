@@ -8,9 +8,9 @@ import cv2
 import numpy as np
 
 HEADLESS = True
+W10_DATA_PATH = "c:\\Development\\pycraft\\starcraft_bot\\train_data\\{}.npy"
+LINUX_DATA_PATH = "/home/captobviouz/Development/sc2bot/starcraft_bot/train_data/{}.npy"
 
-
-print(sc2.__file__)
 class MattBot(sc2.BotAI):
     def __init__(self):
         self.ITERATIONS_PER_MINUTE = 165
@@ -22,7 +22,7 @@ class MattBot(sc2.BotAI):
         print("GAME RESULT IS: {}".format(game_result))
         print(game_result)
         if game_result == Result.Victory:
-            np.save("c:\\Development\\pycraft\\starcraft_bot\\train_data\\{}.npy".format(str(int(time.time()))), np.array(self.train_data))
+            np.save(LINUX_DATA_PATH.format(str(int(time.time()))), np.array(self.train_data))
 
     async def on_step(self, iteration):
         self.iteration = iteration
@@ -116,6 +116,8 @@ class MattBot(sc2.BotAI):
             cv2.circle(game_data, (int(pos[0]), int(pos[1])), 1, (255, 255, 255), -1)
 
         line_max = 50
+        supply_cap_fixed = max(self.supply_cap, 1)
+
         mineral_ratio = self.minerals / 1500
         if mineral_ratio > 1.0:
             mineral_ratio = 1.0
@@ -124,13 +126,12 @@ class MattBot(sc2.BotAI):
         if vespene_ratio > 1.0:
             vespene_ratio = 1.0
 
-        population_ratio = self.supply_left / self.supply_cap
+        population_ratio = self.supply_left / supply_cap_fixed
         if population_ratio > 1.0:
             population_ratio = 1.0
 
-        plausible_supply = self.supply_cap / 200.0
-
-        military_weight = len(self.units(VOIDRAY)) / (self.supply_cap - max(self.supply_left, 1))
+        plausible_supply = supply_cap_fixed / 200.0
+        military_weight = len(self.units(VOIDRAY)) / (supply_cap_fixed - max(self.supply_left, 1))
         if military_weight > 1.0:
             military_weight = 1.0
 
@@ -169,7 +170,7 @@ class MattBot(sc2.BotAI):
 
                 elif choice == 1:
                     # attack_unit_closest_nexus
-                    if len(self.known_enemy_units) > 0:
+                    if len(self.known_enemy_units) > 0 and len(self.units(NEXUS)) > 0:
                         target = self.known_enemy_units.closest_to(random.choice(self.units(NEXUS)))
 
                 elif choice == 2:
@@ -217,8 +218,9 @@ class MattBot(sc2.BotAI):
                         await self.build(STARGATE, near=pylon)
 
     async def expand(self):
-        if self.units(NEXUS).amount < (self.iteration / self.ITERATIONS_PER_MINUTE / 2) and self.can_afford(NEXUS):
-            await self.expand_now()
+        if 1 <= self.units(NEXUS).amount < (self.iteration / self.ITERATIONS_PER_MINUTE / 2):
+            if self.can_afford(NEXUS):
+                await self.expand_now()
 
     async def build_assimilators(self):
         for nexus in self.units(NEXUS).ready:
@@ -249,5 +251,5 @@ class MattBot(sc2.BotAI):
 
 run_game(maps.get("AbyssalReefLE"), [
     Bot(Race.Protoss, MattBot()),
-    Computer(Race.Terran, Difficulty.Easy)
+    Computer(Race.Terran, Difficulty.Hard)
 ], realtime=False)
